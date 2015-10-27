@@ -70,7 +70,7 @@
                         <option value="0">Não</option>
                 </field>
 
-                <field name="MostrarPrazoEntrega_SN" type="list" default="0" label="Mostrar de Entrega">
+                <field name="MostrarPrazoEntrega_SN" type="list" default="0" label="Mostrar prazo de entrega">
                         <option value="1">Sim</option>
                         <option value="0">Não</option>
                 </field>
