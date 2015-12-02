@@ -466,12 +466,18 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
     }
 
     function _xmlCorreios($url) {
+        
+        static $cache; 
+		if (empty($cache)) $cache = array(); 
+		if (isset($cache[$url])) return $cache[$url]; 
+        
         $this->erro_site_correios = null;
         if(ini_get('allow_url_fopen') == '1') {
             $conteudo = @file_get_contents(str_replace('&amp;','&',$url)); // Usa file_get_contents() 
             if($conteudo === false) {
               //echo "$nome_servico: Sistema Indisponível";
               $this->erro_site_correios = "Erro Correios: N&atilde;o foi poss&iacute;vel conectar ao site dos correios, tente novamente mais tarde.";
+             $cache[$url] = false; 
               return false;
             }
 
@@ -485,11 +491,13 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
                $conteudo = curl_exec($ch); 
                $curl_erro = curl_errno($ch);
                if(curl_errno($ch) != 0) {
+                   $cache[$url] = false; 
                   return false;
                }
                curl_close($ch);
             } else {
                $this->erro_site_correios = "Erro Correios: N&atilde;o foi poss&iacute;vel conectar ao site dos correios, tente novamente mais tarde."; 
+               $cache[$url] = false; 
                return false;
             }
         }
@@ -516,6 +524,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
             $msgerro = @$xml->{'forma-pagamento'}->MsgErro;
             $erro = @$xml->{'forma-pagamento'}->Erro;
             $this->erro_site_correios = "Erro Correios: N&atilde;o foi poss&iacute;vel conectar ao site dos correios, tente novamente mais tarde.";
+            $cache[$url] = false; 
             return false;
         }
 
@@ -524,15 +533,19 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
         if ($erro != '' and $erro != '0' and ($valor == 0 or $valor == '')) {
             $this->erro_site_correios = "Erro no Webservice Correios Correios: " . $msgerro;
+            $cache[$url] = false; 
             return false;
         }
 
-        return array(
+        $ret = array(
             "valor"     => $valorFrete,
             "prazo"     => $prazoEntrega,
             "erro"      => $erro,
             "msgErro"   => $msgerro
         );
+        $cache[$url] = $ret;
+		return $ret; 	
+        
     }
 
     protected function checkConditions($cart, $method, $cart_prices) {
