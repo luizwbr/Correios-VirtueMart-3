@@ -1,7 +1,6 @@
 <?php
 
-if (!defined('_JEXEC'))
-    die('Direct Access to ' . basename(__FILE__) . ' is not allowed.');
+defined('_JEXEC') or die;
 
 
 /**
@@ -10,8 +9,8 @@ if (!defined('_JEXEC'))
  * @version $Id: correios_virtuemartbrasil.php 3220 2011-05-12 20:09:14Z Luizwbr $
  * @package VirtueMart
  * @subpackage Plugins - shipment
- * @copyright Copyright (C) 2004-2011 VirtueMart Team - All rights reserved.
- * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see LICENSE.php
+ * @copyright Copyright (C) 2016 - Weber TI - All rights reserved.
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see gplv3-license.txt
  * VirtueMart is free software. This version may have been modified pursuant
  * to the GNU General Public License, and as distributed it includes or
  * is derivative of works licensed under the GNU General Public License or
@@ -24,7 +23,7 @@ if (!defined('_JEXEC'))
  */
 
 if (!class_exists('vmPSPlugin'))
-    require(JPATH_VM_PLUGINS . DS . 'vmpsplugin.php');
+    require(JPATH_VM_PLUGINS . DIRECTORY_SEPARATOR . 'vmpsplugin.php');
 
 class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
@@ -39,6 +38,9 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         $this->total = 0;        
         $this->setConfigParameterable($this->_configTableFieldName, $varsToPush);        
         $this->erro_site_correios = null;
+
+        $this->correios_total = 0;
+        $this->correios_prazo = 0;
     }
 
     /**
@@ -60,7 +62,8 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
             'shipment_weight_unit' => 'char(3) DEFAULT \'KG\' ',
             'shipment_cost' => 'decimal(10,2) DEFAULT NULL',
             'shipment_package_fee' => 'decimal(10,2) DEFAULT NULL',
-            'tax_id' => 'smallint(1) DEFAULT NULL'
+            'tax_id' => 'smallint(1) DEFAULT NULL',
+            'prazo' => 'smallint(2) DEFAULT NULL'
         );
         return $SQLfields;
     }
@@ -107,6 +110,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         $values['shipment_cost'] = $this->total;
         $values['shipment_package_fee'] = $method->Handling_Fee_SN;
         $values['tax_id'] = $method->tax_id;
+        $values['prazo'] = $this->correios_prazo;
         $this->storePSPluginInternalData($values);
 
         return true;
@@ -155,14 +159,40 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
         $html = '<table class="adminlist">' . "\n";
         $html .=$this->getHtmlHeaderBE();
-        $html .= $this->getHtmlRowBE('WEIGHT_COUNTRIES_SHIPPING_NAME', $shipinfo->shipment_name);
-        $html .= $this->getHtmlRowBE('WEIGHT_COUNTRIES_WEIGHT', $shipinfo->order_weight . ' ' . ShopFunctions::renderWeightUnit($shipinfo->shipment_weight_unit));
-        $html .= $this->getHtmlRowBE('WEIGHT_COUNTRIES_COST', $currency->priceDisplay($shipinfo->shipment_cost, '', false));
-        $html .= $this->getHtmlRowBE('WEIGHT_COUNTRIES_PACKAGE_FEE', $currency->priceDisplay($shipinfo->Handling_Fee_SN, '', false));
-        $html .= $this->getHtmlRowBE('WEIGHT_COUNTRIES_TAX', $taxDisplay);
+        $html .= $this->getHtmlRowBE('Método de envio', $shipinfo->shipment_name);
+        $html .= $this->getHtmlRowBE('Peso', $shipinfo->order_weight . ' ' . ShopFunctions::renderWeightUnit($shipinfo->shipment_weight_unit));
+        $html .= $this->getHtmlRowBE('Valor', $currency->priceDisplay($shipinfo->shipment_cost, '', false));
+        $html .= $this->getHtmlRowBE('Custo', $currency->priceDisplay($shipinfo->Handling_Fee_SN, '', false));
+        $html .= $this->getHtmlRowBE('Tarifa/Imposto', $taxDisplay);
+
+        if($shipinfo->prazo > 1) {
+            $prazoDiasCorreios = ' dias úteis'; 
+        } else { 
+            $prazoDiasCorreios = ' dia útil'; 
+        }
+        $prazo = $shipinfo->prazo . $prazoDiasCorreios;
+
+        $html .= $this->getHtmlRowBE('Prazo', $prazo);
         $html .= '</table>' . "\n";
 
+
         return $html;
+    }
+
+    protected function getOrderWeight (VirtueMartCart $cart, $to_weight_unit, $embalagem=0) {
+        static $weight = array();
+        if(!isset($weight[$to_weight_unit])) $weight[$to_weight_unit] = 0.0;
+        if(count($cart->products)>0 and empty($weight[$to_weight_unit])) {           
+
+            foreach ($cart->products as $product) {
+                if ($embalagem) {
+                    $weight[$to_weight_unit] += (ShopFunctions::convertWeightUnit ($product->product_weight + $product->product_packaging, $product->product_weight_uom, $to_weight_unit) * $product->quantity);
+                } else {
+                    $weight[$to_weight_unit] += (ShopFunctions::convertWeightUnit ($product->product_weight, $product->product_weight_uom, $to_weight_unit) * $product->quantity);                
+                }
+            }
+        }
+        return $weight[$to_weight_unit];
     }
 
 
@@ -170,7 +200,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         /*
         // para versões antigas do vm, antes da 2.0.6
         if (!class_exists('VirtuemartModelUser'))
-            require(JPATH_VM_ADMINISTRATOR . DS . 'models' . DS . 'user.php');
+            require(JPATH_VM_ADMINISTRATOR . DIRECTORY_SEPARATOR . 'models' . DIRECTORY_SEPARATOR . 'user.php');
         $vendor = new VirtueMartModelUser();
         $dados = $vendor->getVendor($id);
         foreach ($dados->userInfo as $v){           
@@ -188,6 +218,17 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
     }
 
     function _getPreco_site_correios($cart, $method, $cart_prices) {
+        
+        // cubagem máxima da caixa dos Correios
+        $this->Cubagem_Maxima       = 296207.4163;    
+        // cubagem mínima, levando em conta 16 cm de cada lado
+        $this->Cubagem_Minima       = 4096;
+        // limite de tamanho em cm
+        $this->Limite_Correios      = 105; 
+        // peso máximo
+        $this->Peso_Maximo          = 30; 
+
+        $this->Caixas_Correios      = array();
 
         //Define medidas e formato da embalagem
         //Usei os valores mínimos (16x11x2 Cm) para todas as medidas a seguir:
@@ -225,7 +266,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
                 // converte pra centímetros
                 if ($product->product_lwh_uom != 'CM') {
                     $product_length = ShopFunctions::convertDimensionUnit($product->product_length, $product->product_lwh_uom, "CM");
-                    $product_width = ShopFunctions::convertDimensionUnit($product->product_width, $product->product_lwh_uom, "CM");
+                    $product_width  = ShopFunctions::convertDimensionUnit($product->product_width, $product->product_lwh_uom, "CM");
                     $product_height = ShopFunctions::convertDimensionUnit($product->product_height, $product->product_lwh_uom, "CM");
                 } else {
                     $product_height = $product->product_height;
@@ -264,11 +305,6 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
                 $dados_frete['valor'] = str_replace(",", ".", $dados_frete['valor']);
 
                 $this->correios_total = $dados_frete['valor'] * $product->quantity;
-                //$this->correios_total = $dados_frete['valor'];
-
-                // for ($i=0; $i < $product->quantity; $i++) {
-                //     $this->correios_total += $dados_frete['valor'];
-                // }
 
                 if ($this->correios_prazo < $dados_frete['prazo']) {
                     $this->correios_prazo = $dados_frete['prazo'];
@@ -277,69 +313,110 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
         } else {
 
-            // calcular o volume total do pedido ( um cálculo por pedido )
-            foreach ($cart->products as $k => $product) {
+            if ($method->VolumeProduto_SN == '0') {
+                // algoritimo para usar as caixas
 
-                //Define medidas minimas
-                // converte pra centímetros
+                $this->Order_Length = "16";
+                $this->Order_Width  = "11";
+                $this->Order_Height = "2";
+
+                $this->Caixas_Correios = $this->organizarEmCaixas($cart->products);
+
+                $this->correios_prazo = 0;
+                $this->correios_total = 0;
+
+                // para cada caixa, já envia o medida para os Correios
+                foreach ($this->Caixas_Correios as $caixa) {
+
+                    $total_preco    = $this->getTotalCaixa($caixa['produtos']);
+                    $cubagem_caixa  = $caixa['cubagem'];
+
+                    $medida_lados = ($cubagem_caixa >= $this->Cubagem_Minima) ? $this->raizCubica($cubagem_caixa) : $this->raizCubica($this->Cubagem_Minima);
+
+                    $this->Order_Length = $medida_lados;
+                    $this->Order_Width  = $medida_lados;
+                    $this->Order_Height = $medida_lados;
+
+                    // pega o valor do frete de acordo com a caixa
+                    $dados_frete = $this->_parametrosCorreios($total_preco, $method, $caixa['peso']);
+                    $correios_total = str_replace(",", ".", $dados_frete['valor']);
+
+                    $this->correios_total += $correios_total;
+
+                    // pega sempre o maior prazo
+                    if ($dados_frete['prazo'] > $this->correios_prazo) {
+                        $this->correios_prazo = $dados_frete['prazo'];
+                    }
+
+                }
+        
+            } else {               
+
                 $this->Order_Height = 0;          
 
-                if (strtoupper($product->product_lwh_uom) != 'CM') {
-                    $product_length = ShopFunctions::convertDimensionUnit($product->product_length, $product->product_lwh_uom, "CM");
-                    $product_width  = ShopFunctions::convertDimensionUnit($product->product_width, $product->product_lwh_uom, "CM");
-                    $product_height = ShopFunctions::convertDimensionUnit($product->product_height, $product->product_lwh_uom, "CM");
-                } else {
-                    $product_height = $product->product_height;
-                    $product_width  = $product->product_width;
-                    $product_length = $product->product_length;
+                // calcular o volume total do pedido ( um cálculo por pedido )
+                foreach ($cart->products as $k => $product) {
+
+                    //Define medidas minimas
+                    // converte pra centímetros                   
+
+                    if (strtoupper($product->product_lwh_uom) != 'CM') {
+                        $product_length = ShopFunctions::convertDimensionUnit($product->product_length, $product->product_lwh_uom, "CM");
+                        $product_width  = ShopFunctions::convertDimensionUnit($product->product_width, $product->product_lwh_uom, "CM");
+                        $product_height = ShopFunctions::convertDimensionUnit($product->product_height, $product->product_lwh_uom, "CM");
+                    } else {
+                        $product_height = $product->product_height;
+                        $product_width  = $product->product_width;
+                        $product_length = $product->product_length;
+                    }
+
+                    if ($method->debug) {
+                       vmdebug('<b>Dimension Unit - '.$product->virtuemart_product_id.'</b>:', $product->product_lwh_uom);
+                       vmdebug('<b>Height - '.$product->virtuemart_product_id.'</b>:', $product_height);
+                       vmdebug('<b>Width - '.$product->virtuemart_product_id.'</b>:', $product_width);
+                       vmdebug('<b>Length - '.$product->virtuemart_product_id.'</b>:', $product_length);
+                    }
+                    
+                    if ($method->VolumeProduto_SN == '1') {
+                        $product_height = round($product_height * $product->quantity,2);
+                        if( $product_height > $this->Order_Height){
+                            $this->Order_Height += $product_height;
+                        }
+
+                        if( $product_width > $this->Order_Width){ 
+                            $this->Order_Width = $product_width;
+                        }
+
+                        if( $product_length > $this->Order_Length){ 
+                            $this->Order_Length = $product_length;
+                        }
+                    } else {
+
+                        if( $product_height > $this->Order_Height){
+                            $this->Order_Height = $product_height;
+                        }
+
+                        if( $product_width > $this->Order_Width){ 
+                            $this->Order_Width = $product_width;
+                        }
+
+                        if( $product_length > $this->Order_Length){ 
+                            $this->Order_Length = $product_length;
+                        }
+                    }
+
                 }
 
-                if ($method->debug) {
-                   vmdebug('<b>Dimension Unit - '.$product->virtuemart_product_id.'</b>:', $product->product_lwh_uom);
-                   vmdebug('<b>Height - '.$product->virtuemart_product_id.'</b>:', $product_height);
-                   vmdebug('<b>Width - '.$product->virtuemart_product_id.'</b>:', $product_width);
-                   vmdebug('<b>Length - '.$product->virtuemart_product_id.'</b>:', $product_length);
-                }
-                
-                if ($method->VolumeProduto_SN == '1') {
-                    $product_height = round($product_height * $product->quantity,2);
-                    if( $product_height > $this->Order_Height){
-                        $this->Order_Height += $product_height;
-                    }
+                // preco total do pedido
+                $total_preco = $cart_prices['salesPrice'];    
 
-                    if( $product_width > $this->Order_Width){ 
-                        $this->Order_Width = $product_width;
-                    }
+                $dados_frete = $this->_parametrosCorreios($total_preco, $method, $this->Order_WeightKG);
+                $correios_total = str_replace(",", ".", $dados_frete['valor']);
 
-                    if( $product_length > $this->Order_Length){ 
-                        $this->Order_Length = $product_length;
-                    }
-                } else {
+                $this->correios_total = $correios_total;
+                $this->correios_prazo = $dados_frete['prazo'];
 
-                    if( $product_height > $this->Order_Height){
-                        $this->Order_Height = $product_height;
-                    }
-
-                    if( $product_width > $this->Order_Width){ 
-                        $this->Order_Width = $product_width;
-                    }
-
-                    if( $product_length > $this->Order_Length){ 
-                        $this->Order_Length = $product_length;
-                    }
-                }
-
-            }
-
-
-            // preco total do pedido
-            $total_preco = $cart_prices['salesPrice'];    
-
-            $dados_frete = $this->_parametrosCorreios($total_preco,$method, $this->Order_WeightKG);
-            $correios_total = str_replace(",", ".", $dados_frete['valor']);
-
-            $this->correios_total = $correios_total;
-            $this->correios_prazo = $dados_frete['prazo'];
+            }          
 
         }
 
@@ -358,6 +435,117 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         }
         return;
 
+    }
+
+    // 'empacota' os produtos do carrinho em caixas conforme peso, cubagem e dimensões limites dos Correios
+    function organizarEmCaixas($produtos) {
+    
+        $caixas = array();
+    
+        foreach ($produtos as $prod) {
+    
+            $prod_copy = array();
+    
+            // muda-se a quantidade do produto para incrementá-la em cada caixa
+            $prod_copy['quantity'] = $prod->quantity;
+            
+            if ($prod->product_lwh_uom != 'CM') {
+                $product_length = ShopFunctions::convertDimensionUnit($prod->product_length, $prod->product_lwh_uom, "CM");
+                $product_width  = ShopFunctions::convertDimensionUnit($prod->product_width, $prod->product_lwh_uom, "CM");
+                $product_height = ShopFunctions::convertDimensionUnit($prod->product_height, $prod->product_lwh_uom, "CM");
+            } else {
+                $product_height = $prod->product_height;
+                $product_width  = $prod->product_width;
+                $product_length = $prod->product_length;
+            }
+
+            $product_weight = ShopFunctions::convertWeigthUnit($prod->product_weight, $prod->product_weight_uom, "KG");
+
+            // todas as dimensões da caixa serão em cm e kg
+            $prod_copy['width'] = $product_width;
+            $prod_copy['height']= $product_height;
+            $prod_copy['length']= $product_length;
+
+            // kg
+            $prod_copy['weight']= $product_weight;
+
+    
+            $cx_num = 0;    
+
+            for ($i = 1; $i <= $prod_copy['quantity']; $i++) {
+    
+                // valida as dimensões do produto com as dos Correios
+                if ($this->validarProduto($prod_copy)){
+                     
+                    // cria-se a caixa caso ela não exista.
+                    isset($caixas[$cx_num]['peso']) ? true : $caixas[$cx_num]['peso'] = 0;
+                    isset($caixas[$cx_num]['cubagem']) ? true : $caixas[$cx_num]['cubagem'] = 0;                    
+    
+                    $peso = $caixas[$cx_num]['peso'] + $prod_copy['weight'];
+                    $cubagem = $caixas[$cx_num]['cubagem'] + ($prod_copy['width'] * $prod_copy['height'] * $prod_copy['length']);
+                    
+                    $peso_dentro_limite = ($peso <= $this->Peso_Maximo);
+                    $cubagem_dentro_limite = ($cubagem <= $this->Cubagem_Maxima);
+                    
+                    // o produto dentro do peso e dimensões estabelecidos pelos Correios
+                    if ($peso_dentro_limite && $cubagem_dentro_limite) {
+                        
+                        // já existe o mesmo produto na caixa, assim incrementa-se a sua quantidade
+                        if (isset($caixas[$cx_num]['produtos'][$prod->cart_item_id])) {
+                            $caixas[$cx_num]['produtos'][$prod->cart_item_id]['quantity']++;
+                        }
+                        // adiciona o novo produto
+                        else {
+                            $caixas[$cx_num]['produtos'][$prod->cart_item_id] = $prod_copy;
+                        }                       
+                        
+                        $caixas[$cx_num]['peso'] = $peso;
+                        $caixas[$cx_num]['cubagem'] = $cubagem;
+
+                        // pega o total
+                        $caixas[$cx_num]['produtos'][$prod->cart_item_id]['total'] = $prod->prices['product_price'];
+                    }
+                    // tenta adicionar o produto que não coube em uma nova caixa
+                    else{
+                        $cx_num++;
+                        $i--;
+                    }
+                }
+                // produto não tem as dimensões/peso válidos então abandona sem calcular o frete. 
+                else {
+                    $caixas = array();
+                    break 2;  // sai dos dois foreach
+                }
+            }
+        }
+        return $caixas;
+    }
+
+    // verifica se o produto pode ser enviado para os Correios
+    function validarProduto($produto) {
+        
+        $cubagem    = (float)$produto['height'] * (float)$produto['width'] * (float)$produto['length'];
+        $peso       = (float)$produto['weight'];
+        
+        if(!$peso || $peso > $this->Peso_Maximo || !$cubagem || $cubagem > $this->Cubagem_Maxima || ($produto['height'] > $this->Limite_Correios) || ($produto['width'] > $this->Limite_Correios) || ($produto['length'] > $this->Limite_Correios)){
+            // $this->log->write(sprintf($this->language->get('error_limites'), $produto['name']));            
+            return false;
+        }
+    
+        return true;
+    }
+
+    function getTotalCaixa($products) {
+        $total = 0;
+    
+        foreach ($products as $product) {
+            $total += $product['total'];
+        }
+        return $total;
+    }
+
+    function raizCubica($n) {
+        return pow($n, 1/3);
     }
 
     function getCosts(VirtueMartCart $cart, $method, $cart_prices) {
@@ -380,7 +568,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
 
         if (!class_exists('CurrencyDisplay'))
-        require(JPATH_VM_ADMINISTRATOR . DS . 'helpers' . DS . 'currencydisplay.php');
+        require(JPATH_VM_ADMINISTRATOR . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'currencydisplay.php');
         $currency = CurrencyDisplay::getInstance();
         $costDisplay="";
 
@@ -417,6 +605,11 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
             $html = '<input type="radio" name="' . $pluginmethod_id . '" id="' . $this->_psType . '_id_' . $plugin->$pluginmethod_id . '"   value="' . $plugin->$pluginmethod_id . '" ' . $checked . ">\n"
             . '<label for="' . $this->_psType . '_id_' . $plugin->$pluginmethod_id . '">' . '<span class="' . $this->_type . '">' . $plugin->$pluginName . $costDisplay."</span></label>\n<br style='clear:both' />";
         }
+
+        if ($method->mostrarCaixasFront_SN) {
+            $html .= "<br /><b>".count($this->Caixas_Correios)." caixa(s) usada(s)</b>";
+        }
+
         return $html;
     }
 
@@ -458,8 +651,9 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         $url_busca = "http://ws.correios.com.br/calculador/CalcPrecoPrazo.aspx";
         // $url_busca = "http://ws.correios.com.br/calculador/CalcPrecoPrazo.asmx/CalcPreco";
         $url_busca .= "?" . $workstring;
+
         if ($method->debug) {
-            vmdebug('<b>Debug Correios - Url</b>: <a target="_blank" href="'.$url_busca.'">Serviço: <b>'.$method->Servicos_SN.'</b></a><br/>');
+            echo('<b>Debug Correios - Url</b>: <a target="_blank" href="'.$url_busca.'">Serviço: <b>'.$method->Servicos_SN.'</b></a><br/>');
         }
         $dados_frete = $this->_xmlCorreios($url_busca);
         return $dados_frete;
@@ -568,8 +762,6 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
         $user = JFactory::getUser();
 
-
-
         if ((strlen($this->cepDestino) < 8 || strlen($this->cepDestino) > 11) and $user->id) {
             if ($method->MensagemErro_SN )
                 $mainframe->enqueueMessage("Correios erro: CEP do destinat&aacute;rio &eacute; inv&aacute;lido - CEP deve ter 8 d&iacute;gitos num&eacute;ricos - " . $this->cepDestino);
@@ -612,7 +804,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
         // Verifica se o peso está dentro dos limites
         //não precisa estar logado
-        $this->Order_WeightKG = $orderWeight = $this->getOrderWeight($cart, $method->weight_unit);              
+        $this->Order_WeightKG = $orderWeight = $this->getOrderWeight($cart, $method->weight_unit, $method->Embalagem_SN);              
         if ($method->debug) {            
             vmdebug('Weight:',$orderWeight);
             vmdebug('Unit: ',$method->weight_unit);
@@ -863,7 +1055,6 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
      * @param object $cart Cart object
      * @param integer $selected ID of the method selected
      * @return boolean True on succes, false on failures, null when this plugin was not selected.
-     * On errors, JError::raiseWarning (or JError::raiseError) must be used to set a message.
      *
      * @author Valerie Isaksen
      * @author Max Milbers
@@ -1027,3 +1218,4 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
 }
 // No closing tag
+
