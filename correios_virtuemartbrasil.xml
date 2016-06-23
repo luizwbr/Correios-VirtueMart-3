@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <extension version="2.5" type="plugin" group="vmshipment" method="upgrade">
-    <name>Correios VirtueMart Brasil</name>
-    <creationDate>Junho 2015</creationDate>
+    <name>VMShipment - Correios Brasil</name>
+    <creationDate>Junho 2016</creationDate>
     <author>Luiz Felipe Weber </author>
     <authorUrl>http://virtuemartbrasil.com.br</authorUrl>
-    <copyright>Copyright (C) 2015. All rights reserved.</copyright>
+    <copyright>Copyright (C) 2016. All rights reserved.</copyright>
     <license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL</license>
-    <version>2.0.8</version>
-    <description>Plugin Virtuemart Correios Sedex 2.0.8 - VM 3.+ </description>    
+    <version>2.0.13</version>
+    <description>Plugin Virtuemart Correios Sedex 2.0.13 - VM 3.+ </description>    
     <files>
        <filename plugin="correios_virtuemartbrasil">correios_virtuemartbrasil.php</filename>  
        <folder>images</folder>   
+       <filename>licenca-gplv3.txt</filename>   
+       <filename>gplv3-license.txt</filename>   
+       <filename>correios_full.png</filename>   
     </files>
 
     <media destination="../images/stories/virtuemart/shipment" folder="images">
@@ -22,9 +25,8 @@
     <vmconfig>
         <fields name="params">
             <fieldset name="template">
-                <field type="vmjpluginwarning"/>
                 <field name="shipment_logos" type="vmfiles" multiple="true" directory="/images/stories/virtuemart/shipment"
-                       hide_none="1" label="VMSHIPMENT_WEIGHT_COUNTRIES_LOGOS"
+                       hide_none="1" label="Logos"
                        size="40"
                        description="VMSHIPMENT_WEIGHT_COUNTRIES_LOGOS_DESC"/>
             </fieldset>
@@ -52,7 +54,6 @@
                     <option value="40606">(40606) SEDEX - com contrato</option>
                     <option value="41106">(41106) PAC - sem contrato</option>
                     <option value="41068">(41068) PAC - com contrato</option>
-                    <option value="41300">(41300) PAC - grandes formatos com contrato</option>
                     <option value="43010">(43010) REEMBOLSO POSTAL</option>
                     <option value="40010">(40010) SEDEX - sem contrato</option>
                     <option value="44105">(44105) MALOTE - sem contrato</option>
@@ -61,8 +62,8 @@
 
                 </field>
                 <field type="spacer" default="Serviço com Contrato" level="level1" />   
-                <field name="Usuario_SN" type="text" size="15" default="" label="Usuário" description="Código da empresa no contrato dos Correios ( usuário )"/>
-                <field name="Senha_SN" type="password" size="15" default="" label="Senha" description="Senha de acesso ao painel dos Correios"/>
+                <field name="Usuario_SN" type="text" size="15" default="" label="Usuário Correios" description="Código da empresa no contrato dos Correios ( usuário )"/>
+                <field name="Senha_SN" type="password" size="15" default="" label="Senha Correios" description="Senha de acesso ao painel dos Correios"/>
 
                 <field type="spacer" default="Configuração Exibição" level="level1" />   
 
@@ -71,111 +72,118 @@
                         <option value="0">Não</option>
                 </field>
 
-                <field name="MostrarPrazoEntrega_SN" type="list" default="0" label="Mostrar prazo de entrega">
+                <field name="MostrarPrazoEntrega_SN" type="list" default="0" label="Mostrar de Entrega">
                         <option value="1">Sim</option>
                         <option value="0">Não</option>
                 </field>
 
                 <field type="spacer" default="Configuração Cálculo" level="level1" />	
-                    <field name="FreteProduto_SN" type="list" default="0" label="Calcular um frete por produto">
-                        <option value="1">Sim</option>
-                        <option value="0">Não</option>
-                    </field>
-                    <field type="spacer" default="Configuração envio Correios" level="level1" />  
-                    <field name="ValorDeclara_SN" type="list" default="1" label="Declarar valor (recomendado)">
-                        <option value="1">Sim</option>
-                        <option value="0">Não</option>
-                    </field>
-                    <field name="MaoPropria_SN" type="list" default="0" label="Mão Própria">
-                        <option value="1">Sim</option>
-                        <option value="0">Não</option>
-                    </field>
-                    
-                    <field name="AvisoReceb_SN" type="list" default="0" label="Aviso de recebimento">
-                        <option value="1">Sim</option>
-                        <option value="0">Não</option>
-                    </field>
-                    
-                    
-                    <field name="Formatos_SN" type="list" default="0" label="Formato">
-                        <option value="1">Caixa/Pacote</option>
-                        <option value="2">Rolo Prisma</option>
-                    </field>
-                    
-                    <field name="Comprimento_SN" type="text" size="10" default="16" label="Comprimento Médio Pacote (Cm)" description=""/>
-                    
-                    <field name="Larg_Diam_SN" type="text" size="10" default="11" label="Largura/Diâmetro médio pacotes(Cm)" description=""/>
-                    
-                    <field name="Altura_SN" type="text" size="10" default="2" label="Altura média pacotes(Cm)" description=""/>
-                    <field name="Prazo_Extra_SN" type="text" size="10" default="0" label="Prazo Extra Entrega ( Dias )" description=""/>
-                    
-                    <field name="VolumeProduto_SN" type="list" default="0" label="Utilizar soma do volume do produto ou sempre o maior">
-                        <option value="1">Volume do produto somado</option>
-                        <option value="0">Sempre o maior volume do produto</option>
-                    </field>
+                <field name="FreteProduto_SN" type="list" default="0" label="Calcular um frete por produto">
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </field>
+                <field type="spacer" default="Configuração envio Correios" level="level1" />  
+                <field name="ValorDeclara_SN" type="list" default="1" label="Declarar valor (recomendado)">
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </field>
+                <field name="MaoPropria_SN" type="list" default="0" label="Mão Própria">
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </field>
+                
+                <field name="AvisoReceb_SN" type="list" default="0" label="Aviso de recebimento">
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </field>                
+                
+                <field name="Formatos_SN" type="list" default="0" label="Formato">
+                    <option value="1">Caixa/Pacote</option>
+                    <option value="2">Rolo Prisma</option>
+                </field>
+                
+                <field name="Comprimento_SN" type="text" size="10" default="16" label="Comprimento Médio Pacote (Cm)" description=""/>
+                
+                <field name="Larg_Diam_SN" type="text" size="10" default="11" label="Largura/Diâmetro médio pacotes(Cm)" description=""/>
+                
+                <field name="Altura_SN" type="text" size="10" default="2" label="Altura média pacotes(Cm)" description=""/>
+                <field name="Prazo_Extra_SN" type="text" size="10" default="0" label="Prazo Extra Entrega ( Dias )" description=""/>
+                
+                <field name="VolumeProduto_SN" type="list" default="2" label="Método de cubagem">
+                    <option value="0">1 - Organização em caixas</option>
+                    <option value="1">2 - Empilhamento de produtos ( somando sempre a altura e pegando as maiores larguras e alturas )</option>
+                    <option value="2">3 - Sempre o maior volume do produto</option>
+                </field>
 
-                    <field type="spacer" default="Configuração de faixa de cep" level="level2" />
-                    <field name="MensagemErro_SN" type="list" default="0" label="Mostra Mensagens Erro Correios">
+                <field name="mostrarCaixasFront_SN" type="list" default="0" label="Mostrar Caixas Front">
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </field> 
+
+                <field name="Embalagem_SN" type="list" default="0" label="Somar o peso da embalagem no produto">
                         <option value="1">Sim</option>
                         <option value="0">Não</option>
-                    </field>
-                    
+                </field>
 
+                <field type="spacer" default="Configuração de faixa de cep" level="level2" />
+                <field name="MensagemErro_SN" type="list" default="0" label="Mostra Mensagens Erro Correios">
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </field>
 
-                    <field name="UsoFaixa_SN" type="list" default="2" label="Faixa de CEPs">
-                        <option value="0">Aplicar nesta faixa de CEPs</option>
-                        <option value="1">Ignorar nesta faixa de CEPs</option>
-                        <option value="2">Não usar faixa de CEP</option>
-                    </field>
-                    
-                    
-                    <field name="CepStart_SN" type="text" size="10" default="" label="CEP Inicial(somente números)" description=""/>
-                    
-                    <field name="CepEnd_SN" type="text" size="10" default="" label="CEP Final(somente números)" description=""/>
-                    
-                    <field type="spacer" default="Tratamento de falhas no site dos correios" level="level3" />        
-                    
-                    <field name="ContFalha_SN" type="list" default="0" label="Permite continuar em caso de falha">
-                        <option value="0">Não</option>
-                        <option value="1">Sim</option>
-                    </field>
-                    
-                    <field name="UsaSC_SN" type="list" default="1" label='Usa "SEDEX a Cobrar" em caso de falha'>
-                        <option value="0">Não</option>
-                        <option value="1">Sim</option>
-                    </field>        
-                    
-                    <field name="Msgfalha_SN" type="text" size="60" default="" label="Mensagem a exibir no caso de falha" description="" maxlength="60"/>
-                    
-                    <field type="spacer" default="Outras configurações" level="level4" />        
-                    <field name="countries" type="vmcountries"  scope="com_virtuemart" default="" label="Países" description="Por favor, selecione um país. Se nenhum for selecionado esta tarifa valerá para todos os países."/>
-                    <field name="weight_start" type="text" size="10" default="" label="Peso Mínimo" description="Por favor, digite um peso mínimo. Se nenhuma informação for digitada, o peso mínimo não será considerado."/>
-                    <field name="weight_stop" type="text" size="10" default="" label="Peso Máximo" description="Por favor, digite um peso máximo. Se nenhuma informação for digitada, o peso máximo não será considerado."/>
-                    <field name="weight_unit" type="vmweightunit" size="10" default="" label="Unidade de Peso" description="Unidade de Peso para a regra"/>
-                    <field name="nbproducts_start" type="text" size="10" default="" label="Número mínimo de Produtos" description="Número mínimo de produtos"/>
-                    <field name="nbproducts_stop" type="text" size="10" default="" label="Número máximo de Produtos" description="Número máximo de produtos"/>
-                    <field name="orderamount_start" type="text" size="10" default="" label="Valor mínimo de Pedido" description="Valor mínimo de Pedido"/>
-                    <field name="orderamount_stop" type="text" size="10" default="" label="Valor máximo de Pedido" description="Valor máximo de Pedido"/> 
-        </fieldset>
-        <fieldset name="fee">
-            <field name="Handling_Fee_SN" type="text" size="10" default="0" label="Taxa de empacotamento e manuseio" description=""/>
-            <field name="Handling_Fee_SN_type" type="radio" default="plus" label='Modo de cobrança Taxa de empacotamento' description="Caso esteja definido como modo valor, o valor da tarifa irá somar ao total do frete, caso contrário, o valor será multiplicado ao valor do frete">
-                <option value="plus">Valor (+)</option>
-                <option value="time">Multiplicador (x)</option>
-            </field>
+                <field name="UsoFaixa_SN" type="list" default="2" label="Faixa de CEPs">
+                    <option value="0">Aplicar nesta faixa de CEPs</option>
+                    <option value="1">Ignorar nesta faixa de CEPs</option>
+                    <option value="2">Não usar faixa de CEP</option>
+                </field>                
+                
+                <field name="CepStart_SN" type="text" size="10" default="" label="CEP Inicial(somente números)" description=""/>
+                
+                <field name="CepEnd_SN" type="text" size="10" default="" label="CEP Final(somente números)" description=""/>
+                
+                <field type="spacer" default="Tratamento de falhas no site dos correios" level="level3" />        
+                
+                <field name="ContFalha_SN" type="list" default="0" label="Permite continuar em caso de falha">
+                    <option value="0">Não</option>
+                    <option value="1">Sim</option>
+                </field>
+                
+                <field name="UsaSC_SN" type="list" default="1" label='Usa "SEDEX a Cobrar" em caso de falha'>
+                    <option value="0">Não</option>
+                    <option value="1">Sim</option>
+                </field>        
+                
+                <field name="Msgfalha_SN" type="text" size="60" default="" label="Mensagem a exibir no caso de falha" description="" maxlength="60"/>
+                
+                <field type="spacer" default="Outras configurações" level="level4" />        
+                <field name="countries" type="vmcountries"  scope="com_virtuemart" default="" label="Países" description="Por favor, selecione um país. Se nenhum for selecionado esta tarifa valerá para todos os países."/>
+                <field name="weight_start" type="text" size="10" default="" label="Peso Mínimo" description="Por favor, digite um peso mínimo. Se nenhuma informação for digitada, o peso mínimo não será considerado."/>
+                <field name="weight_stop" type="text" size="10" default="" label="Peso Máximo" description="Por favor, digite um peso máximo. Se nenhuma informação for digitada, o peso máximo não será considerado."/>
+                <field name="weight_unit" type="vmweightunit" size="10" default="" label="Unidade de Peso" description="Unidade de Peso para a regra"/>
+                <field name="nbproducts_start" type="text" size="10" default="" label="Número mínimo de Produtos" description="Número mínimo de produtos"/>
+                <field name="nbproducts_stop" type="text" size="10" default="" label="Número máximo de Produtos" description="Número máximo de produtos"/>
+                <field name="orderamount_start" type="text" size="10" default="" label="Valor mínimo de Pedido" description="Valor mínimo de Pedido"/>
+                <field name="orderamount_stop" type="text" size="10" default="" label="Valor máximo de Pedido" description="Valor máximo de Pedido"/> 
+            </fieldset>
+            <fieldset name="fee">
+                <field name="Handling_Fee_SN" type="text" size="10" default="0" label="Taxa de empacotamento e manuseio" description=""/>
+                <field name="Handling_Fee_SN_type" type="radio" default="plus" label='Modo de cobrança Taxa de empacotamento' description="Caso esteja definido como modo valor, o valor da tarifa irá somar ao total do frete, caso contrário, o valor será multiplicado ao valor do frete">
+                    <option value="plus">Valor (+)</option>
+                    <option value="time">Multiplicador (x)</option>
+                </field>
 
-            <field name="tax_id" type="vmtaxes" scope="com_virtuemart"  label="Classe de Taxação" />
-            <field name="free_shipment" type="text" label="Valor mínimo para frete grátis" description="Digite o valor mínimo do pedido para contar como frete grátis" />
+                <field name="tax_id" type="vmtaxes" scope="com_virtuemart"  label="Classe de Taxação" />
+                <field name="free_shipment" type="text" label="Valor mínimo para frete grátis" description="Digite o valor mínimo do pedido para contar como frete grátis" />
 
-            <field name="debug" type="list" default="0" label="Debugar Valores de frete">
-                <option value="1">Sim</option>
-                <option value="0">Não</option>
-            </field>
-            <field type="spacer" default="
-                &lt;div&gt; Licença: &lt;a href=&quot;http://www.gnu.org/licenses/gpl-3.0.html&quot;&gt;GNU/GPL v3&lt;/a&gt; - Desenvolvido por Luiz Weber - &lt;a href=&quot;http://weber.eti.br&quot;&gt;Weber TI&lt;/a&gt; | &lt;a href=&quot;http://webgenium.com.br&quot;&gt;Webgenium System&lt;/a&gt;
-                &lt;/div&gt;    
-                " level="level4" />
-        </fieldset>
-    </fields>
+                <field name="debug" type="list" default="0" label="Debugar Valores de frete">
+                    <option value="1">Sim</option>
+                    <option value="0">Não</option>
+                </field>
+                <field type="spacer" default="
+                    &lt;div&gt; Licença: &lt;a href=&quot;http://www.gnu.org/licenses/gpl-3.0.html&quot;&gt;GNU/GPL v3&lt;/a&gt; - Desenvolvido por Luiz Weber - &lt;a href=&quot;http://weber.eti.br&quot;&gt;Weber TI&lt;/a&gt; 
+                    &lt;/div&gt;    
+                    " level="level4" />
+            </fieldset>
+        </fields>
     </vmconfig>    
 </extension>
