@@ -1024,7 +1024,13 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
     }
 
-
+	/**
+	 * @param VirtueMartCart $cart
+	 * @return null
+	 */
+	public function plgVmOnSelectCheckShipment (VirtueMartCart &$cart) {
+		return $this->OnSelectCheck ($cart);
+	}
 
     /**
      * This event is fired after the shipment method has been selected. It can be used to store
