@@ -607,7 +607,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
             $this->Order_Height = "2";
         }
 
-        $servicos_com_contrato = array("81019","81027","81035","81868","81833","81850","40126","40436","40444","40568","40606","41068","41300");
+        $servicos_com_contrato = array("81019","81027","81035","81868","81833","81850","40126","40436","40444","40568","40606","41068","41300","40096");
         $workstring = "";
         if (in_array($method->Servicos_SN,$servicos_com_contrato)) {
             $workstring = 'nCdEmpresa='.trim($method->Usuario_SN);
