@@ -1,5 +1,6 @@
-Correios-VirtueMart-3
-Plugin de envio - Correios VirtueMart 3
+# Correios-VirtueMart-3
+Método de envio não-oficial que integra o VirtueMart com os principais métodos de entrega dos Correios, como Sedex, PAC, Sedex10, Sedex Hoje, E-sedex, Carta, Malote, etc.
+* VirtueMart 3.x / Joomla 3.x
 
 Tutorial
 -------
@@ -29,8 +30,8 @@ Unless required by applicable law or agreed to in writing, software distributed 
 Dúvidas?
 ----------
 
-Em caso de dúvidas acesse o site http://virtuemartbrasil.com.br.
-Checklist de frete: http://loja.weber.eti.br/blog/entry/checklist-frete-virtuemart.html
+Em caso de dúvidas acesse o site http://virtuemartpro.com.br.
+Caso o plugin não funcione, veja este checklist de frete: http://loja.weber.eti.br/blog/entry/checklist-frete-virtuemart.html
 
 Contato
 ----------
