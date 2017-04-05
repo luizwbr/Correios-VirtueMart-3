@@ -1,6 +1,7 @@
 <?php
 
-defined('_JEXEC') or die;
+if (!defined('_JEXEC'))
+    die('Direct Access to ' . basename(__FILE__) . ' is not allowed.');
 
 
 /**
@@ -9,8 +10,8 @@ defined('_JEXEC') or die;
  * @version $Id: correios_virtuemartbrasil.php 3220 2011-05-12 20:09:14Z Luizwbr $
  * @package VirtueMart
  * @subpackage Plugins - shipment
- * @copyright Copyright (C) 2016 - Weber TI - All rights reserved.
- * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see gplv3-license.txt
+ * @copyright Copyright (C) 2004-2011 VirtueMart Team - All rights reserved.
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL, see LICENSE.php
  * VirtueMart is free software. This version may have been modified pursuant
  * to the GNU General Public License, and as distributed it includes or
  * is derivative of works licensed under the GNU General Public License or
@@ -23,7 +24,7 @@ defined('_JEXEC') or die;
  */
 
 if (!class_exists('vmPSPlugin'))
-    require(JPATH_VM_PLUGINS . DIRECTORY_SEPARATOR . 'vmpsplugin.php');
+    require(JPATH_VM_PLUGINS . DS . 'vmpsplugin.php');
 
 class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
@@ -38,7 +39,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         $this->total = 0;        
         $this->setConfigParameterable($this->_configTableFieldName, $varsToPush);        
         $this->erro_site_correios = null;
-
+        
         $this->correios_total = 0;
         $this->correios_prazo = 0;
     }
@@ -179,28 +180,12 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         return $html;
     }
 
-    protected function getOrderWeight (VirtueMartCart $cart, $to_weight_unit, $embalagem=0) {
-        static $weight = array();
-        if(!isset($weight[$to_weight_unit])) $weight[$to_weight_unit] = 0.0;
-        if(count($cart->products)>0 and empty($weight[$to_weight_unit])) {           
-
-            foreach ($cart->products as $product) {
-                if ($embalagem) {
-                    $weight[$to_weight_unit] += (ShopFunctions::convertWeightUnit ($product->product_weight + $product->product_packaging, $product->product_weight_uom, $to_weight_unit) * $product->quantity);
-                } else {
-                    $weight[$to_weight_unit] += (ShopFunctions::convertWeightUnit ($product->product_weight, $product->product_weight_uom, $to_weight_unit) * $product->quantity);                
-                }
-            }
-        }
-        return $weight[$to_weight_unit];
-    }
-
 
     function _getVendedor($campo, $cart) {
         /*
         // para versões antigas do vm, antes da 2.0.6
         if (!class_exists('VirtuemartModelUser'))
-            require(JPATH_VM_ADMINISTRATOR . DIRECTORY_SEPARATOR . 'models' . DIRECTORY_SEPARATOR . 'user.php');
+            require(JPATH_VM_ADMINISTRATOR . DS . 'models' . DS . 'user.php');
         $vendor = new VirtueMartModelUser();
         $dados = $vendor->getVendor($id);
         foreach ($dados->userInfo as $v){           
@@ -218,8 +203,8 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
     }
 
     function _getPreco_site_correios($cart, $method, $cart_prices) {
-        
-        // cubagem máxima da caixa dos Correios
+
+         // cubagem máxima da caixa dos Correios
         $this->Cubagem_Maxima       = 296207.4163;    
         // cubagem mínima, levando em conta 16 cm de cada lado
         $this->Cubagem_Minima       = 4096;
@@ -436,8 +421,8 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         return;
 
     }
-
-    // 'empacota' os produtos do carrinho em caixas conforme peso, cubagem e dimensões limites dos Correios
+    
+     // 'empacota' os produtos do carrinho em caixas conforme peso, cubagem e dimensões limites dos Correios
     function organizarEmCaixas($produtos) {
     
         $caixas = array();
@@ -568,7 +553,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
 
         if (!class_exists('CurrencyDisplay'))
-        require(JPATH_VM_ADMINISTRATOR . DIRECTORY_SEPARATOR . 'helpers' . DIRECTORY_SEPARATOR . 'currencydisplay.php');
+        require(JPATH_VM_ADMINISTRATOR . DS . 'helpers' . DS . 'currencydisplay.php');
         $currency = CurrencyDisplay::getInstance();
         $costDisplay="";
 
@@ -605,11 +590,6 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
             $html = '<input type="radio" name="' . $pluginmethod_id . '" id="' . $this->_psType . '_id_' . $plugin->$pluginmethod_id . '"   value="' . $plugin->$pluginmethod_id . '" ' . $checked . ">\n"
             . '<label for="' . $this->_psType . '_id_' . $plugin->$pluginmethod_id . '">' . '<span class="' . $this->_type . '">' . $plugin->$pluginName . $costDisplay."</span></label>\n<br style='clear:both' />";
         }
-
-        if ($method->mostrarCaixasFront_SN) {
-            $html .= "<br /><b>".count($this->Caixas_Correios)." caixa(s) usada(s)</b>";
-        }
-
         return $html;
     }
 
@@ -627,8 +607,12 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
             $this->Order_Height = "2";
         }
 
-        $workstring = 'nCdEmpresa='.trim($method->Usuario_SN);
-        $workstring.='&sDsSenha='.trim($method->Senha_SN);
+        $servicos_com_contrato = array("81019","81027","81035","81868","81833","81850","40126","40436","40444","40568","40606","41068","41300","40096");
+        $workstring = "";
+        if (in_array($method->Servicos_SN,$servicos_com_contrato)) {
+            $workstring = 'nCdEmpresa='.trim($method->Usuario_SN);
+            $workstring.='&sDsSenha='.trim($method->Senha_SN);    
+        } 
         $workstring.='&nVlDiametro=0';
         $workstring.='&sCdMaoPropria=0';
         $workstring.='&nCdServico='. $method->Servicos_SN;
@@ -651,21 +635,26 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         $url_busca = "http://ws.correios.com.br/calculador/CalcPrecoPrazo.aspx";
         // $url_busca = "http://ws.correios.com.br/calculador/CalcPrecoPrazo.asmx/CalcPreco";
         $url_busca .= "?" . $workstring;
-
         if ($method->debug) {
-            echo('<b>Debug Correios - Url</b>: <a target="_blank" href="'.$url_busca.'">Serviço: <b>'.$method->Servicos_SN.'</b></a><br/>');
+            vmdebug('<b>Debug Correios - Url</b>: <a target="_blank" href="'.$url_busca.'">Serviço: <b>'.$method->Servicos_SN.'</b></a><br/>');
         }
         $dados_frete = $this->_xmlCorreios($url_busca);
         return $dados_frete;
     }
 
     function _xmlCorreios($url) {
+        
+        static $cache; 
+		if (empty($cache)) $cache = array(); 
+		if (isset($cache[$url])) return $cache[$url]; 
+        
         $this->erro_site_correios = null;
         if(ini_get('allow_url_fopen') == '1') {
             $conteudo = @file_get_contents(str_replace('&amp;','&',$url)); // Usa file_get_contents() 
             if($conteudo === false) {
               //echo "$nome_servico: Sistema Indisponível";
               $this->erro_site_correios = "Erro Correios: N&atilde;o foi poss&iacute;vel conectar ao site dos correios, tente novamente mais tarde.";
+             $cache[$url] = false; 
               return false;
             }
 
@@ -679,11 +668,13 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
                $conteudo = curl_exec($ch); 
                $curl_erro = curl_errno($ch);
                if(curl_errno($ch) != 0) {
+                   $cache[$url] = false; 
                   return false;
                }
                curl_close($ch);
             } else {
                $this->erro_site_correios = "Erro Correios: N&atilde;o foi poss&iacute;vel conectar ao site dos correios, tente novamente mais tarde."; 
+               $cache[$url] = false; 
                return false;
             }
         }
@@ -710,6 +701,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
             $msgerro = @$xml->{'forma-pagamento'}->MsgErro;
             $erro = @$xml->{'forma-pagamento'}->Erro;
             $this->erro_site_correios = "Erro Correios: N&atilde;o foi poss&iacute;vel conectar ao site dos correios, tente novamente mais tarde.";
+            $cache[$url] = false; 
             return false;
         }
 
@@ -718,15 +710,19 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
         if ($erro != '' and $erro != '0' and ($valor == 0 or $valor == '')) {
             $this->erro_site_correios = "Erro no Webservice Correios Correios: " . $msgerro;
+            $cache[$url] = false; 
             return false;
         }
 
-        return array(
+        $ret = array(
             "valor"     => $valorFrete,
             "prazo"     => $prazoEntrega,
             "erro"      => $erro,
             "msgErro"   => $msgerro
         );
+        $cache[$url] = $ret;
+		return $ret; 	
+        
     }
 
     protected function checkConditions($cart, $method, $cart_prices) {
@@ -761,6 +757,8 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         }
 
         $user = JFactory::getUser();
+
+
 
         if ((strlen($this->cepDestino) < 8 || strlen($this->cepDestino) > 11) and $user->id) {
             if ($method->MensagemErro_SN )
@@ -804,7 +802,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
         // Verifica se o peso está dentro dos limites
         //não precisa estar logado
-        $this->Order_WeightKG = $orderWeight = $this->getOrderWeight($cart, $method->weight_unit, $method->Embalagem_SN);              
+        $this->Order_WeightKG = $orderWeight = $this->getOrderWeight($cart, $method->weight_unit);              
         if ($method->debug) {            
             vmdebug('Weight:',$orderWeight);
             vmdebug('Unit: ',$method->weight_unit);
@@ -1026,7 +1024,13 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
     }
 
-
+	/**
+	 * @param VirtueMartCart $cart
+	 * @return null
+	 */
+	public function plgVmOnSelectCheckShipment (VirtueMartCart &$cart) {
+		return $this->OnSelectCheck ($cart);
+	}
 
     /**
      * This event is fired after the shipment method has been selected. It can be used to store
@@ -1055,6 +1059,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
      * @param object $cart Cart object
      * @param integer $selected ID of the method selected
      * @return boolean True on succes, false on failures, null when this plugin was not selected.
+     * On errors, JError::raiseWarning (or JError::raiseError) must be used to set a message.
      *
      * @author Valerie Isaksen
      * @author Max Milbers
@@ -1218,4 +1223,3 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
 
 }
 // No closing tag
-

@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <extension version="2.5" type="plugin" group="vmshipment" method="upgrade">
     <name>VMShipment - Correios Brasil</name>
-    <creationDate>Maio 2016</creationDate>
+    <creationDate>2017</creationDate>
     <author>Luiz Felipe Weber </author>
     <authorUrl>http://virtuemartbrasil.com.br</authorUrl>
     <copyright>Copyright (C) 2016. All rights reserved.</copyright>
     <license>http://www.gnu.org/licenses/gpl-3.0.html GNU/GPL</license>
-    <version>2.0.13</version>
-    <description>Plugin Virtuemart Correios Sedex 2.0.13 - VM 3.+ </description>    
+    <version>2.0.15</version>
+    <description>Plugin Virtuemart Correios Sedex 2.0.15 - VM 3.+ </description>    
     <files>
        <filename plugin="correios_virtuemartbrasil">correios_virtuemartbrasil.php</filename>  
        <folder>images</folder>   
@@ -72,7 +72,7 @@
                         <option value="0">Não</option>
                 </field>
 
-                <field name="MostrarPrazoEntrega_SN" type="list" default="0" label="Mostrar prazo de Entrega">
+                <field name="MostrarPrazoEntrega_SN" type="list" default="0" label="Mostrar de Entrega">
                         <option value="1">Sim</option>
                         <option value="0">Não</option>
                 </field>
