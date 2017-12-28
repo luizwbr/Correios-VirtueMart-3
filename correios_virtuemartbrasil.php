@@ -625,7 +625,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         $workstring.='&nVlAltura=' . str_replace('.',',',$this->Order_Height);
         //$workstring.='&nVlComprimento=' . str_replace('.',',',$this->Order_Length) . $this->Opt1 . str_replace('.',',',$this->Order_Width) . $this->Opt2;
         $workstring.='&MaoPropria=' . $this->Order_MaoPropria;
-        if ($method->ValorDeclara_SN) {
+        if ($method->ValorDeclara_SN && round($total_preco) >= 18) {
             $workstring.='&nVlValorDeclarado=' . round($total_preco);
         } else {
             $workstring.='&nVlValorDeclarado=0';
