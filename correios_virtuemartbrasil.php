@@ -109,7 +109,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         $values['order_weight'] = $this->getOrderWeight($cart, $method->weight_unit);
         $values['shipment_weight_unit'] = $method->weight_unit;
         $values['shipment_cost'] = $this->total;
-        $values['shipment_package_fee'] = $method->Handling_Fee_SN;
+        $values['shipment_package_fee'] = (isset($method->Handling_Fee_SN)?$method->Handling_Fee_SN:0
         $values['tax_id'] = $method->tax_id;
         $values['prazo'] = $this->correios_prazo;
         $this->storePSPluginInternalData($values);
@@ -163,7 +163,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         $html .= $this->getHtmlRowBE('Método de envio', $shipinfo->shipment_name);
         $html .= $this->getHtmlRowBE('Peso', $shipinfo->order_weight . ' ' . ShopFunctions::renderWeightUnit($shipinfo->shipment_weight_unit));
         $html .= $this->getHtmlRowBE('Valor', $currency->priceDisplay($shipinfo->shipment_cost, '', false));
-        $html .= $this->getHtmlRowBE('Custo', $currency->priceDisplay($shipinfo->Handling_Fee_SN, '', false));
+        $html .= $this->getHtmlRowBE('Custo', $currency->priceDisplay((isset($shipinfo->Handling_Fee_SN)?$shipinfo->Handling_Fee_SN:0), '', false));
         $html .= $this->getHtmlRowBE('Tarifa/Imposto', $taxDisplay);
 
         if($shipinfo->prazo > 1) {
@@ -230,7 +230,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         $this->Order_Formatos = $method->Formatos_SN;
 
         //Taxa de empacotamento e manuseio, e será acrescida aos custos de envio retornados pelos Correios
-        $this->Order_Handling_Fee = $method->Handling_Fee_SN;
+        $this->Order_Handling_Fee = (isset($method->Handling_Fee_SN)?$method->Handling_Fee_SN:0);
         $this->Order_Handling_Fee = floatval(str_replace(",", ".", $this->Order_Handling_Fee));
 
         //Serviço Mão Própria dos Correios
