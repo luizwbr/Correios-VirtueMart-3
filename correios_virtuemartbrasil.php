@@ -109,7 +109,7 @@ class plgVmShipmentCorreios_Virtuemartbrasil extends vmPSPlugin {
         $values['order_weight'] = $this->getOrderWeight($cart, $method->weight_unit);
         $values['shipment_weight_unit'] = $method->weight_unit;
         $values['shipment_cost'] = $this->total;
-        $values['shipment_package_fee'] = (isset($method->Handling_Fee_SN)?$method->Handling_Fee_SN:0
+        $values['shipment_package_fee'] = (isset($method->Handling_Fee_SN)?$method->Handling_Fee_SN:0);
         $values['tax_id'] = $method->tax_id;
         $values['prazo'] = $this->correios_prazo;
         $this->storePSPluginInternalData($values);
